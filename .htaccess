@@ -3,6 +3,21 @@
   RewriteEngine On
   RewriteBase /
 
+  # --- SECURITY: HOTLINK PROTECTION ---
+  # Mencegah website lain mencuri bandwidth (Hotlinking) gambar & video Anda.
+  # Ganti domain di bawah sesuai domain asli saat production.
+  
+  RewriteCond %{HTTP_REFERER} !^$
+  RewriteCond %{HTTP_REFERER} !^http(s)?://(www\.)?localhost [NC]
+  RewriteCond %{HTTP_REFERER} !^http(s)?://(www\.)?127.0.0.1 [NC]
+  # Tambahkan domain production anda di baris bawah ini:
+  RewriteCond %{HTTP_REFERER} !^http(s)?://(www\.)?unair.ac.id [NC]
+  RewriteCond %{HTTP_REFERER} !^http(s)?://(www\.)?ppk2ipe.unair.ac.id [NC]
+  RewriteCond %{HTTP_REFERER} !^http(s)?://(www\.)?google.com [NC]
+  # Blokir akses langsung ke file ekstensi berikut jika bukan dari domain di atas
+  RewriteRule \.(mp4|avi|mov|wmv|jpg|jpeg|png|gif|svg)$ - [NC,F,L]
+  # ------------------------------------
+
   # 1. Handle React Router (Single Page Application)
   # Jika file yang diminta BUKAN file fisik (!-f)
   RewriteCond %{REQUEST_FILENAME} !-f

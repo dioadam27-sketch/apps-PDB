@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect, useRef } from 'react';
 import { Send, Bot, User, Cpu, Sparkles } from 'lucide-react';
 import { generateArchitectAdvice } from '../services/geminiService';
@@ -77,13 +78,13 @@ export const ArchitectConsultant: React.FC = () => {
 
   return (
     <div className="flex flex-col h-[calc(100vh-6rem)] bg-white rounded-2xl shadow-sm border border-slate-200 overflow-hidden">
-      <div className="bg-gradient-to-r from-purple-600 to-indigo-600 p-6 flex items-center justify-between text-white">
+      <div className="bg-gradient-to-r from-[#0a1e3f] to-[#1e3a8a] p-6 flex items-center justify-between text-white border-b-4 border-amber-400">
         <div>
           <h2 className="text-xl font-bold flex items-center gap-2">
-            <Sparkles className="w-5 h-5 text-yellow-300" />
+            <Sparkles className="w-5 h-5 text-amber-400" />
             System Architect Consultant
           </h2>
-          <p className="text-purple-100 text-sm mt-1">
+          <p className="text-blue-100 text-sm mt-1">
             Powered by Gemini 3.0 • Ask about integration & architecture
           </p>
         </div>
@@ -100,19 +101,19 @@ export const ArchitectConsultant: React.FC = () => {
           >
             <div
               className={`w-10 h-10 rounded-full flex items-center justify-center flex-shrink-0 ${
-                msg.role === 'user' ? 'bg-slate-200' : 'bg-indigo-100'
+                msg.role === 'user' ? 'bg-slate-200' : 'bg-blue-100'
               }`}
             >
               {msg.role === 'user' ? (
                 <User size={20} className="text-slate-600" />
               ) : (
-                <Bot size={20} className="text-indigo-600" />
+                <Bot size={20} className="text-[#0a1e3f]" />
               )}
             </div>
             <div
               className={`p-4 rounded-2xl text-sm leading-relaxed whitespace-pre-wrap shadow-sm ${
                 msg.role === 'user'
-                  ? 'bg-blue-600 text-white rounded-tr-none'
+                  ? 'bg-[#0a1e3f] text-white rounded-tr-none'
                   : 'bg-white text-slate-700 border border-slate-200 rounded-tl-none'
               }`}
             >
@@ -123,13 +124,13 @@ export const ArchitectConsultant: React.FC = () => {
         
         {isTyping && (
           <div className="flex items-start gap-4">
-             <div className="w-10 h-10 rounded-full bg-indigo-100 flex items-center justify-center flex-shrink-0">
-               <Bot size={20} className="text-indigo-600" />
+             <div className="w-10 h-10 rounded-full bg-blue-100 flex items-center justify-center flex-shrink-0">
+               <Bot size={20} className="text-[#0a1e3f]" />
              </div>
              <div className="bg-white p-4 rounded-2xl rounded-tl-none border border-slate-200 shadow-sm flex items-center gap-2">
-               <div className="w-2 h-2 bg-indigo-400 rounded-full animate-bounce" style={{ animationDelay: '0ms' }} />
-               <div className="w-2 h-2 bg-indigo-400 rounded-full animate-bounce" style={{ animationDelay: '150ms' }} />
-               <div className="w-2 h-2 bg-indigo-400 rounded-full animate-bounce" style={{ animationDelay: '300ms' }} />
+               <div className="w-2 h-2 bg-blue-400 rounded-full animate-bounce" style={{ animationDelay: '0ms' }} />
+               <div className="w-2 h-2 bg-blue-400 rounded-full animate-bounce" style={{ animationDelay: '150ms' }} />
+               <div className="w-2 h-2 bg-blue-400 rounded-full animate-bounce" style={{ animationDelay: '300ms' }} />
              </div>
           </div>
         )}
@@ -143,12 +144,12 @@ export const ArchitectConsultant: React.FC = () => {
             onChange={(e) => setQuery(e.target.value)}
             onKeyDown={(e) => e.key === 'Enter' && handleSend()}
             placeholder="Ask a question about system integration..."
-            className="flex-1 px-4 py-3 bg-slate-100 border-0 rounded-xl focus:ring-2 focus:ring-indigo-500 focus:bg-white transition-all outline-none text-slate-700"
+            className="flex-1 px-4 py-3 bg-slate-100 border-0 rounded-xl focus:ring-2 focus:ring-[#0a1e3f] focus:bg-white transition-all outline-none text-slate-700"
           />
           <button
             onClick={handleSend}
             disabled={!query.trim() || isTyping}
-            className="p-3 bg-indigo-600 text-white rounded-xl hover:bg-indigo-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors shadow-md"
+            className="p-3 bg-[#0a1e3f] text-white rounded-xl hover:bg-blue-900 disabled:opacity-50 disabled:cursor-not-allowed transition-colors shadow-md"
           >
             <Send size={20} />
           </button>

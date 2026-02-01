@@ -3,36 +3,74 @@ import React, { useState, useEffect } from 'react';
 import { Sidebar } from './components/Sidebar';
 import { Dashboard } from './components/Dashboard';
 import { AppViewer } from './components/AppViewer';
+import { LandingPage } from './components/LandingPage';
 import { APP_MODULES, MOCK_USER } from './constants';
 import { Search } from 'lucide-react';
 
 const App: React.FC = () => {
+  // Determine initial state based on current URL hash
+  const getInitialLandingState = () => {
+    const hash = window.location.hash.replace('#', '');
+    // If we have a hash like 'dashboard' or a module id, skip landing page
+    return hash === '' || hash === '/'; 
+  };
+
+  const getInitialActiveModule = () => {
+    const hash = window.location.hash.replace('#', '');
+    const moduleExists = APP_MODULES.find(m => m.id === hash);
+    return moduleExists ? hash : null;
+  };
+
+  // State for showing Landing Page vs Main App
+  const [showLanding, setShowLanding] = useState(getInitialLandingState);
+
   // Navigation State
   // null = Dashboard, 'simpdb'/'helpdesk'/etc = specific apps
-  const [activeModule, setActiveModule] = useState<string | null>(null);
+  const [activeModule, setActiveModule] = useState<string | null>(getInitialActiveModule);
 
-  // Effect to handle URL Hash changes (Support for "Open in New Tab")
+  // Effect to handle URL Hash changes (Support for "Open in New Tab" & Back/Forward button)
   useEffect(() => {
     const handleHashChange = () => {
       const hash = window.location.hash.replace('#', '');
-      if (!hash) {
-        setActiveModule(null);
-        return;
-      }
       
-      const moduleExists = APP_MODULES.find(m => m.id === hash);
-      if (moduleExists && !moduleExists.externalUrl) {
-        setActiveModule(hash);
+      if (hash === '' || hash === '/') {
+        // Root URL -> Show Landing Page
+        setShowLanding(true);
+        setActiveModule(null);
+      } else if (hash === 'dashboard') {
+        // #dashboard -> Show Main Dashboard, Hide Landing
+        setShowLanding(false);
+        setActiveModule(null);
+      } else {
+        // #moduleID -> Check if valid module
+        const moduleExists = APP_MODULES.find(m => m.id === hash);
+        
+        if (moduleExists) {
+          // Internal module
+          if (!moduleExists.externalUrl) {
+            setShowLanding(false);
+            setActiveModule(hash);
+          } 
+          // Note: External URLs are usually handled by browser default behavior 
+          // or opened in new tab, so they rarely hit this useEffect logic 
+          // unless manually typed.
+        } else {
+          // Unknown hash -> default to dashboard or landing?
+          // Let's default to dashboard if logged in (implied), or landing if not.
+          // For this prototype, if unknown hash, go to dashboard if we were already inside, 
+          // but to be safe, let's treat unknown hash as Landing Page to avoid errors.
+           if (!showLanding) {
+             // If already inside, stay inside (dashboard)
+             setActiveModule(null);
+           }
+        }
       }
     };
-
-    // Check on initial load
-    handleHashChange();
 
     // Listen for hash changes
     window.addEventListener('hashchange', handleHashChange);
     return () => window.removeEventListener('hashchange', handleHashChange);
-  }, []);
+  }, [showLanding]);
 
   const handleNavigate = (module: string | null) => {
     // Check if the selected module has an external URL
@@ -42,19 +80,30 @@ const App: React.FC = () => {
         window.open(selectedApp.externalUrl, '_blank');
         return;
       }
-      // Update Hash for internal navigation (makes browser back button work naturally)
+      // Update Hash for internal navigation
       window.location.hash = module;
     } else {
-      // Clear hash for dashboard
-      history.pushState("", document.title, window.location.pathname + window.location.search);
-      setActiveModule(null);
+      // Navigate to Dashboard
+      window.location.hash = 'dashboard';
     }
+  };
+
+  const handleEnterApp = () => {
+    // When entering from Landing Page, set hash to dashboard
+    // This triggers the hashchange event which updates the state
+    window.location.hash = 'dashboard';
   };
 
   const currentApp = APP_MODULES.find(m => m.id === activeModule);
 
+  // If showLanding is true, render the Landing Page
+  if (showLanding) {
+    return <LandingPage onEnter={handleEnterApp} />;
+  }
+
+  // Otherwise, render the Main App Layout
   return (
-    <div className="flex h-screen bg-slate-100 font-sans text-slate-900">
+    <div className="flex h-screen bg-slate-100 font-sans text-slate-900 animate-fade-in">
       {/* Sidebar */}
       <Sidebar 
         activeModule={activeModule} 
