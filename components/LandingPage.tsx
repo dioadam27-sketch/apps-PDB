@@ -1,5 +1,5 @@
 import React, { useEffect } from 'react';
-import { ArrowRight, ShieldCheck, Flag, HeartHandshake, Users, Star, PlayCircle } from 'lucide-react';
+import { ArrowRight, ShieldCheck, Flag, HeartHandshake, Users, Star, PlayCircle, ExternalLink } from 'lucide-react';
 
 interface LandingPageProps {
   onEnter: () => void;
@@ -272,6 +272,23 @@ export const LandingPage: React.FC<LandingPageProps> = ({ onEnter }) => {
                   </div>
                </div>
 
+               {/* Video: Perkuat Kolaborasi */}
+               <div className="w-full max-w-4xl mx-auto mt-10 md:mt-16 relative group reveal-on-scroll delay-300">
+                 <div className="absolute -inset-2 bg-gradient-to-r from-red-500 to-white rounded-3xl blur opacity-25 group-hover:opacity-50 transition duration-1000 group-hover:duration-200"></div>
+                 <div className="relative overflow-hidden rounded-2xl shadow-2xl border-2 md:border-4 border-white bg-black">
+                   <div className="relative pb-[56.25%] h-0">
+                      <iframe 
+                        className="absolute top-0 left-0 w-full h-full border-0"
+                        src="https://www.youtube-nocookie.com/embed/TFf2g7BqMoY?si=YcAtP99oa0wJLFYk&rel=0" 
+                        title="YouTube video player" 
+                        allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share" 
+                        referrerPolicy="strict-origin-when-cross-origin" 
+                        allowFullScreen
+                      ></iframe>
+                   </div>
+                 </div>
+               </div>
+
             </div>
          </div>
       </div>
@@ -302,6 +319,18 @@ export const LandingPage: React.FC<LandingPageProps> = ({ onEnter }) => {
                  <p>
                    Sejak didirikan pada tahun 2016, AIL berkomitmen untuk mewujudkan pendidikan tinggi yang inklusif, adil, dan setara bagi seluruh komunitas akademik, khususnya bagi penyandang disabilitas atau mahasiswa berkebutuhan khusus (MBK).
                  </p>
+               </div>
+
+               {/* New Link Button */}
+               <div className="pt-2">
+                  <a 
+                    href="https://ail.pendidikan.unair.ac.id/"
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="inline-flex items-center gap-2 px-6 py-3 bg-emerald-600 text-white rounded-xl font-bold text-sm md:text-base hover:bg-emerald-700 transition-all shadow-lg hover:shadow-emerald-600/30 hover:-translate-y-1 group"
+                  >
+                    Selengkapnya <ExternalLink size={18} className="group-hover:translate-x-1 transition-transform" />
+                  </a>
                </div>
             </div>
 

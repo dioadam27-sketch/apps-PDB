@@ -2,11 +2,18 @@
 <IfModule mod_rewrite.c>
   RewriteEngine On
   RewriteBase /
+  
+  # 0. REQUIRED FOR CPANEL/APACHE
+  # Diperlukan di beberapa server cPanel agar mod_rewrite berjalan lancar
+  Options +FollowSymLinks -MultiViews
+
+  # 1. FORCE HTTPS (REKOMENDASI: AKTIFKAN JIKA SUDAH ADA SSL)
+  # Hapus tanda pagar (#) pada 2 baris di bawah ini untuk memaksa pengunjung menggunakan HTTPS
+  # RewriteCond %{HTTPS} !=on
+  # RewriteRule ^ https://%{HTTP_HOST}%{REQUEST_URI} [L,R=301]
 
   # --- SECURITY: HOTLINK PROTECTION ---
   # Mencegah website lain mencuri bandwidth (Hotlinking) gambar & video Anda.
-  # Ganti domain di bawah sesuai domain asli saat production.
-  
   RewriteCond %{HTTP_REFERER} !^$
   RewriteCond %{HTTP_REFERER} !^http(s)?://(www\.)?localhost [NC]
   RewriteCond %{HTTP_REFERER} !^http(s)?://(www\.)?127.0.0.1 [NC]
@@ -18,7 +25,7 @@
   RewriteRule \.(mp4|avi|mov|wmv|jpg|jpeg|png|gif|svg)$ - [NC,F,L]
   # ------------------------------------
 
-  # 1. Handle React Router (Single Page Application)
+  # 2. Handle React Router (Single Page Application)
   # Jika file yang diminta BUKAN file fisik (!-f)
   RewriteCond %{REQUEST_FILENAME} !-f
   # Dan BUKAN folder fisik (!-d)
@@ -27,25 +34,36 @@
   RewriteRule ^ index.html [L]
 </IfModule>
 
-# 2. Security: Matikan akses browsing folder
+# 3. Security: Matikan akses browsing folder
 Options -Indexes
 
-# 3. Performance: Aktifkan Kompresi Gzip
+# 4. Security Headers (Best Practice)
+<IfModule mod_headers.c>
+  # Mencegah serangan MIME-sniffing
+  Header set X-Content-Type-Options "nosniff"
+  # Mencegah serangan XSS (Cross-Site Scripting)
+  Header set X-XSS-Protection "1; mode=block"
+  # Mencegah clickjacking (site tidak bisa di-iframe oleh domain lain yang tidak diizinkan)
+  Header set X-Frame-Options "SAMEORIGIN"
+  # Kebijakan Referrer
+  Header set Referrer-Policy "strict-origin-when-cross-origin"
+</IfModule>
+
+# 5. Performance: Aktifkan Kompresi Gzip
 <IfModule mod_deflate.c>
   AddOutputFilterByType DEFLATE text/html text/plain text/xml text/css text/javascript application/javascript application/json image/svg+xml
 </IfModule>
 
-# 4. Caching Headers (Optimal untuk React Production Build)
+# 6. Caching Headers (Optimal untuk React Production Build)
 <IfModule mod_headers.c>
-  # File HTML jangan dicache (agar update aplikasi langsung terlihat user)
+  # File HTML jangan dicache (agar update aplikasi langsung terlihat user tanpa perlu clear cache)
   <FilesMatch "\.(html|htm)$">
     Header set Cache-Control "max-age=0, no-cache, no-store, must-revalidate"
     Header set Pragma "no-cache"
     Header set Expires "Wed, 11 Jan 1984 05:00:00 GMT"
   </FilesMatch>
 
-  # Aset Statis (JS, CSS, Gambar) cache selama 1 tahun
-  # (Asumsi build tool seperti Vite/Webpack menggunakan hashing pada nama file)
+  # Aset Statis (JS, CSS, Gambar, Font) cache selama 1 tahun untuk performa maksimal
   <FilesMatch "\.(css|js|jpg|jpeg|png|gif|svg|ico|woff|woff2|ttf|eot)$">
     Header set Cache-Control "max-age=31536000, public"
   </FilesMatch>
