@@ -1,5 +1,5 @@
 {
   "name": "web pkkii",
-  "description": "A centralized Single Sign-On (SSO) portal prototype integrating SIMPDB, Helpdesk, PHL, and Digital Repository into a unified dashboard with an AI Architect Consultant.",
+  "description": "A centralized Single Sign-On (SSO) portal prototype integrating SIMPDB, Helpdesk, PHL, and Digital Repository into a unified dashboard.",
   "requestFramePermissions": []
 }
