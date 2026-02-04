@@ -36,9 +36,7 @@ export const AdminPanel: React.FC = () => {
     discardChanges,
     hasUnsavedChanges,
     logout, 
-    resetData,
-    apiUrl,
-    updateApiUrl
+    resetData
   } = useData();
 
   const [activeTab, setActiveTab] = useState<'apps' | 'content'>('apps');
@@ -57,9 +55,6 @@ export const AdminPanel: React.FC = () => {
   const [newGalleryUrl, setNewGalleryUrl] = useState('');
   const [newGalleryCaption, setNewGalleryCaption] = useState('');
 
-  // API Config State
-  const [localApiUrl, setLocalApiUrl] = useState(apiUrl);
-
   const [showContentSuccess, setShowContentSuccess] = useState(false);
   const [showResetConfirm, setShowResetConfirm] = useState(false);
   const [isPublishing, setIsPublishing] = useState(false);
@@ -68,17 +63,6 @@ export const AdminPanel: React.FC = () => {
   useEffect(() => {
     setContentForm(draftContent);
   }, [draftContent]);
-
-  // Sync API URL
-  useEffect(() => {
-    setLocalApiUrl(apiUrl);
-  }, [apiUrl]);
-
-  const handleSaveApiUrl = () => {
-    if (window.confirm("Changing the API URL will reload the application. Continue?")) {
-        updateApiUrl(localApiUrl);
-    }
-  };
 
   // --- APP EDITING HANDLERS ---
   const handleAddApp = () => {
@@ -548,7 +532,7 @@ export const AdminPanel: React.FC = () => {
                 )}
              </div>
 
-             {/* API CONFIGURATION (UPDATED) */}
+             {/* API CONFIGURATION (REVERTED) */}
              <div className="bg-white rounded-xl shadow-sm border border-slate-200 p-6">
                 <h3 className="font-bold text-slate-500 text-sm uppercase tracking-wide mb-4 border-b border-slate-200 pb-2 flex items-center gap-2">
                   <Key size={16} /> General Configuration
@@ -556,22 +540,16 @@ export const AdminPanel: React.FC = () => {
                 
                 <div className="bg-slate-50 p-4 rounded-lg border border-slate-200">
                    <div className="mb-2">
-                      <label className="block text-sm font-bold text-[#0a1e3f] mb-1">Backend API Endpoint</label>
-                      <p className="text-xs text-slate-500 mb-2">URL to the `webapi.php` file on your server (Live Data Source).</p>
+                      <label className="block text-sm font-bold text-[#0a1e3f] mb-1">Google Gemini API Key</label>
+                      <p className="text-xs text-slate-500 mb-2">Required for the AI Assistant feature. Get a key from AI Studio.</p>
                       <div className="flex gap-2">
                           <input 
-                            type="text" 
-                            value={localApiUrl} 
-                            onChange={(e) => setLocalApiUrl(e.target.value)} 
-                            placeholder="https://yourdomain.com/webapi.php" 
+                            type="password" 
+                            value={contentForm.googleApiKey || ''}
+                            onChange={(e) => handleContentChange('googleApiKey', e.target.value)}
+                            placeholder="AIzaSy..." 
                             className="flex-1 p-2 border border-slate-300 rounded-lg text-sm font-mono focus:ring-2 focus:ring-blue-500 outline-none"
                           />
-                          <button 
-                            onClick={handleSaveApiUrl}
-                            className="bg-slate-700 text-white px-4 py-2 rounded-lg text-sm font-bold hover:bg-slate-800 flex items-center gap-2"
-                          >
-                            <Link size={14} /> Set URL
-                          </button>
                       </div>
                    </div>
                 </div>

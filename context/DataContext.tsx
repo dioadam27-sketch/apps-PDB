@@ -22,10 +22,6 @@ interface DataContextType {
   discardChanges: () => void;
   hasUnsavedChanges: boolean;
 
-  // --- CONFIG ---
-  apiUrl: string;
-  updateApiUrl: (url: string) => void;
-
   // --- AUTH ---
   isAuthenticated: boolean;
   login: (password: string) => boolean;
@@ -35,15 +31,14 @@ interface DataContextType {
 
 const DataContext = createContext<DataContextType | undefined>(undefined);
 
-// Default URL if not set in LocalStorage
+// Hardcoded API URL (Reverted to original)
 const DEFAULT_API_URL = 'https://pkkii.pendidikan.unair.ac.id/website/webapi.php';
 
 // Keys for Local Storage
 const STORAGE_KEYS = {
   DRAFT_MODULES: 'pdb_draft_modules',
   DRAFT_CONTENT: 'pdb_draft_content',
-  AUTH: 'pdb_admin_auth',
-  API_URL: 'pdb_api_endpoint' // New key for dynamic API URL
+  AUTH: 'pdb_admin_auth'
 };
 
 export const DataProvider: React.FC<{ children: ReactNode }> = ({ children }) => {
@@ -57,18 +52,6 @@ export const DataProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
       console.error(`Error loading ${key}`, e);
       return fallback;
     }
-  };
-
-  // --- API CONFIG STATE ---
-  const [apiUrl, setApiUrl] = useState<string>(() => {
-      return localStorage.getItem(STORAGE_KEYS.API_URL) || DEFAULT_API_URL;
-  });
-
-  const updateApiUrl = (url: string) => {
-      setApiUrl(url);
-      localStorage.setItem(STORAGE_KEYS.API_URL, url);
-      // We need to reload to ensure all components fetch from the new URL
-      setTimeout(() => window.location.reload(), 500);
   };
 
   // Live State (Fetched from API, defaults to Constants)
@@ -87,7 +70,7 @@ export const DataProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
   useEffect(() => {
     const fetchLiveData = async () => {
         try {
-            const response = await fetch(apiUrl + '?t=' + Date.now()); // use dynamic apiUrl
+            const response = await fetch(DEFAULT_API_URL + '?t=' + Date.now());
             if (response.ok) {
                 const contentType = response.headers.get("content-type");
                 if (contentType && contentType.indexOf("application/json") !== -1) {
@@ -117,7 +100,7 @@ export const DataProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
     };
     
     fetchLiveData();
-  }, [apiUrl]); // Re-fetch if apiUrl changes
+  }, []);
 
   // Change Detection
   const [hasUnsavedChanges, setHasUnsavedChanges] = useState(false);
@@ -159,7 +142,7 @@ export const DataProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
     };
 
     try {
-        const response = await fetch(apiUrl, { // use dynamic apiUrl
+        const response = await fetch(DEFAULT_API_URL, {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify(payload)
@@ -182,7 +165,7 @@ export const DataProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
         }
     } catch (error) {
         console.error("Publish error:", error);
-        alert(`Terjadi kesalahan koneksi ke ${apiUrl}. Pastikan file ada di server.`);
+        alert(`Terjadi kesalahan koneksi ke server.`);
     }
   };
 
@@ -228,8 +211,6 @@ export const DataProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
       publishChanges,
       discardChanges,
       hasUnsavedChanges,
-      apiUrl,
-      updateApiUrl,
       isAuthenticated, 
       login, 
       logout, 
