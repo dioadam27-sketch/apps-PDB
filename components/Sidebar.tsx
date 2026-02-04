@@ -1,6 +1,5 @@
-
 import React from 'react';
-import { Home, ChevronRight, CalendarDays, LifeBuoy, Building2, Archive, Grid, LogOut } from 'lucide-react';
+import { Home, ChevronRight, CalendarDays, LifeBuoy, Building2, Archive, Grid, LogOut, Lock, BookOpen, Activity, Users } from 'lucide-react';
 import { AppModule } from '../types';
 
 interface SidebarProps {
@@ -15,6 +14,9 @@ const getIcon = (iconName: string) => {
     case 'LifeBuoy': return LifeBuoy;
     case 'Building2': return Building2;
     case 'Archive': return Archive;
+    case 'BookOpen': return BookOpen;
+    case 'Activity': return Activity;
+    case 'Users': return Users;
     default: return Grid;
   }
 };
@@ -34,6 +36,9 @@ export const Sidebar: React.FC<SidebarProps> = ({ activeModule, onNavigate, modu
   const handleBackToHome = () => {
     window.location.hash = '';
   };
+
+  // Filter only visible modules
+  const visibleModules = modules.filter(m => m.visible !== false);
 
   return (
     <div className="w-64 bg-[#0a1e3f] text-slate-300 flex flex-col h-screen fixed left-0 top-0 border-r border-blue-900 z-20 transition-all duration-300 shadow-2xl">
@@ -73,7 +78,7 @@ export const Sidebar: React.FC<SidebarProps> = ({ activeModule, onNavigate, modu
         </div>
         
         {/* App Links */}
-        {modules.map((app) => {
+        {visibleModules.map((app) => {
           const Icon = getIcon(app.icon);
           const isActive = activeModule === app.id;
           return (
@@ -107,8 +112,25 @@ export const Sidebar: React.FC<SidebarProps> = ({ activeModule, onNavigate, modu
           <LogOut size={18} className="group-hover:text-amber-400 transition-colors" />
           Kembali ke Beranda
         </button>
-        <div className="text-center text-xs text-slate-500 mt-2">
-          &copy; 2024 Apps PDB Unair
+        
+        <div className="flex justify-between items-center mt-2 px-2 pt-2 border-t border-blue-900/30">
+           <div className="text-xs text-slate-500">
+             &copy; 2024 Apps PDB
+           </div>
+           {/* Secret Admin Button */}
+           <a 
+             href="#admin" 
+             className="text-slate-500 hover:text-amber-400 hover:bg-blue-900/30 p-1.5 rounded-lg transition-all" 
+             title="Login Admin / Pengaturan"
+             onClick={(e) => {
+               // Optional: Force reload if already on admin hash to ensure render
+               if (window.location.hash === '#admin') {
+                 window.location.reload();
+               }
+             }}
+           >
+             <Lock size={14} />
+           </a>
         </div>
       </div>
     </div>

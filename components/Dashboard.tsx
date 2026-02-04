@@ -1,7 +1,6 @@
-
 import React from 'react';
 import { AppModule } from '../types';
-import { Users, LifeBuoy, BookOpen, Activity, ArrowRight, ExternalLink, CalendarDays, Building2, Archive } from 'lucide-react';
+import { Users, LifeBuoy, BookOpen, Activity, ArrowRight, ExternalLink, CalendarDays, Building2, Archive, Grid } from 'lucide-react';
 
 interface DashboardProps {
   modules: AppModule[];
@@ -17,7 +16,7 @@ const getIcon = (iconName: string) => {
     case 'CalendarDays': return CalendarDays;
     case 'Building2': return Building2;
     case 'Archive': return Archive;
-    default: return ExternalLink;
+    default: return Grid;
   }
 };
 
@@ -29,6 +28,9 @@ export const Dashboard: React.FC<DashboardProps> = ({ modules, onNavigate }) => 
       onNavigate(app.id);
     }
   };
+
+  // Filter visible modules
+  const visibleModules = modules.filter(m => m.visible !== false);
 
   return (
     <div className="space-y-8 animate-fade-in pb-12">
@@ -60,7 +62,7 @@ export const Dashboard: React.FC<DashboardProps> = ({ modules, onNavigate }) => 
           Your Applications
         </h3>
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-          {modules.map((app) => {
+          {visibleModules.map((app) => {
             const Icon = getIcon(app.icon);
             return (
               <a 
@@ -90,7 +92,8 @@ export const Dashboard: React.FC<DashboardProps> = ({ modules, onNavigate }) => 
                   
                 <div className="relative z-10 flex items-center justify-between mt-auto pt-4 border-t border-slate-50">
                   <span className={`px-3 py-1 rounded-full text-xs font-bold uppercase tracking-wide
-                    ${app.status === 'active' ? 'bg-emerald-100 text-emerald-700' : 'bg-orange-100 text-orange-700'}
+                    ${app.status === 'active' ? 'bg-emerald-100 text-emerald-700' : 
+                      app.status === 'beta' ? 'bg-orange-100 text-orange-700' : 'bg-red-100 text-red-700'}
                   `}>
                     {app.status}
                   </span>
