@@ -240,7 +240,7 @@ export const LandingPage: React.FC<LandingPageProps> = ({ onEnter }) => {
             {/* Logo Section */}
             <div className="flex items-center gap-2 md:gap-4 group cursor-pointer flex-1 min-w-0">
               <img 
-                src="https://ppk2ipe.unair.ac.id/gambar/UNAIR_BRANDMARK_2025-02.png" 
+                src="https://pkkii.pendidikan.unair.ac.id/website/logo.jpeg" 
                 alt="UNAIR Logo" 
                 className="h-10 w-auto md:h-14 object-contain transition-transform duration-500 group-hover:rotate-6 group-hover:scale-110 flex-shrink-0"
               />

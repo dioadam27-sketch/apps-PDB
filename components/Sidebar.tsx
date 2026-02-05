@@ -44,7 +44,7 @@ export const Sidebar: React.FC<SidebarProps> = ({ activeModule, onNavigate, modu
     <div className="w-64 bg-[#0a1e3f] text-slate-300 flex flex-col h-screen fixed left-0 top-0 border-r border-blue-900 z-20 transition-all duration-300 shadow-2xl">
       <div className="p-6 flex items-center gap-3 border-b border-blue-900/50 bg-[#06142e]">
         <img 
-          src="https://ppk2ipe.unair.ac.id/gambar/UNAIR_BRANDMARK_2025-02.png" 
+          src="https://pkkii.pendidikan.unair.ac.id/website/logo.jpeg" 
           alt="UNAIR Logo" 
           className="h-12 w-auto object-contain bg-white rounded-lg p-1"
         />
