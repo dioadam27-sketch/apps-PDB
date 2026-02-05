@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { useData } from '../context/DataContext';
 import { AppModule, LandingContent, LandingSection, HeroSlide, GalleryItem } from '../types';
-import { Save, X, Edit2, RotateCcw, LogOut, CheckCircle, AlertCircle, Eye, EyeOff, Settings, CalendarDays, LifeBuoy, Building2, Archive, BookOpen, Activity, Users, Grid, LayoutTemplate, Smartphone, Plus, Trash2, ArrowUp, ArrowDown, Image as ImageIcon, MonitorPlay, Rocket, RefreshCw, Key, Link } from 'lucide-react';
+import { Save, X, Edit2, RotateCcw, LogOut, CheckCircle, AlertCircle, Eye, EyeOff, Settings, CalendarDays, LifeBuoy, Building2, Archive, BookOpen, Activity, Users, Grid, LayoutTemplate, Smartphone, Plus, Trash2, ArrowUp, ArrowDown, Image as ImageIcon, MonitorPlay, Rocket, RefreshCw, Key, Link, AlertTriangle } from 'lucide-react';
 
 const ICON_OPTIONS = [
   { value: 'CalendarDays', label: 'Calendar' },
@@ -36,7 +36,9 @@ export const AdminPanel: React.FC = () => {
     discardChanges,
     hasUnsavedChanges,
     logout, 
-    resetData
+    resetData,
+    apiUrl,
+    updateApiUrl
   } = useData();
 
   const [activeTab, setActiveTab] = useState<'apps' | 'content'>('apps');
@@ -55,14 +57,34 @@ export const AdminPanel: React.FC = () => {
   const [newGalleryUrl, setNewGalleryUrl] = useState('');
   const [newGalleryCaption, setNewGalleryCaption] = useState('');
 
+  // API Config State
+  const [localApiUrl, setLocalApiUrl] = useState(apiUrl);
+
   const [showContentSuccess, setShowContentSuccess] = useState(false);
   const [showResetConfirm, setShowResetConfirm] = useState(false);
-  const [isPublishing, setIsPublishing] = useState(false);
+  
+  // Publish Feedback States
+  const [publishStatus, setPublishStatus] = useState<'idle' | 'loading' | 'success' | 'error'>('idle');
+  const [publishMessage, setPublishMessage] = useState('');
+  
+  // NEW: Success Modal State
+  const [showSuccessModal, setShowSuccessModal] = useState(false);
 
   // Sync local form with draft content when it changes (or on init)
   useEffect(() => {
     setContentForm(draftContent);
   }, [draftContent]);
+
+  // Sync API URL
+  useEffect(() => {
+    setLocalApiUrl(apiUrl);
+  }, [apiUrl]);
+
+  const handleSaveApiUrl = () => {
+    if (window.confirm("Changing the API URL will reload the application. Continue?")) {
+        updateApiUrl(localApiUrl);
+    }
+  };
 
   // --- APP EDITING HANDLERS ---
   const handleAddApp = () => {
@@ -229,13 +251,25 @@ export const AdminPanel: React.FC = () => {
 
   // --- PUBLISH HANDLER ---
   const handlePublish = async () => {
-    if (window.confirm("Publish changes to the live site? This will update the view for all users.")) {
-      setIsPublishing(true);
-      try {
-        await publishChanges();
-      } finally {
-        setIsPublishing(false);
-      }
+    // FIX: Removed window.confirm to make button immediately responsive
+    setPublishStatus('loading');
+    setPublishMessage('');
+    
+    const result = await publishChanges();
+    
+    if (result.success) {
+        setPublishStatus('success');
+        setShowSuccessModal(true); // SHOW LARGE MODAL
+        
+        // Auto hide modal after 2.5 seconds
+        setTimeout(() => {
+            setShowSuccessModal(false);
+            setPublishStatus('idle'); // Re-enable button
+        }, 2500);
+    } else {
+        setPublishStatus('error');
+        setPublishMessage(result.message || 'Error occurred');
+        setTimeout(() => setPublishStatus('idle'), 4000);
     }
   };
 
@@ -261,8 +295,42 @@ export const AdminPanel: React.FC = () => {
 
   return (
     <div className="min-h-screen bg-slate-50 relative z-50 overflow-y-auto pb-20">
+      
+      {/* ----------------- SUCCESS POPUP MODAL (NEW) ----------------- */}
+      {showSuccessModal && (
+        <div className="fixed inset-0 z-[9999] flex items-center justify-center bg-black/50 backdrop-blur-sm animate-fade-in">
+           <div className="bg-white p-8 md:p-12 rounded-3xl shadow-2xl flex flex-col items-center text-center max-w-sm w-full transform scale-100 transition-all border-4 border-emerald-50">
+              <div className="w-24 h-24 bg-emerald-100 rounded-full flex items-center justify-center mb-6 animate-bounce">
+                <CheckCircle size={48} className="text-emerald-600" />
+              </div>
+              <h2 className="text-2xl font-bold text-[#0a1e3f] mb-2">Publish Berhasil!</h2>
+              <p className="text-slate-500 mb-6">
+                Perubahan Anda telah disimpan dan kini aktif di halaman utama.
+              </p>
+              <div className="w-full h-1.5 bg-slate-100 rounded-full overflow-hidden">
+                 <div className="h-full bg-emerald-500 animate-[shimmer_2s_infinite]"></div>
+              </div>
+           </div>
+        </div>
+      )}
+
+      {/* ERROR TOAST */}
+      {publishStatus === 'error' && (
+        <div className="fixed top-24 right-8 z-[100] animate-fade-in-up pointer-events-none">
+           <div className="bg-red-600 text-white px-6 py-4 rounded-xl shadow-2xl flex items-center gap-4 border border-red-400/30">
+              <div className="bg-white/20 p-2 rounded-full">
+                <AlertTriangle size={28} className="text-white" />
+              </div>
+              <div>
+                <h4 className="font-bold text-lg">Gagal Menyimpan</h4>
+                <p className="text-red-50 text-sm">{publishMessage}</p>
+              </div>
+           </div>
+        </div>
+      )}
+
       {/* Admin Navbar */}
-      <div className="bg-[#0a1e3f] text-white px-8 py-4 shadow-md flex justify-between items-center sticky top-0 z-40">
+      <div className="bg-[#0a1e3f] text-white px-8 py-4 shadow-md flex justify-between items-center sticky top-0 z-[60]">
          <div className="flex items-center gap-3">
             <Settings className="text-amber-400" />
             <div>
@@ -283,17 +351,24 @@ export const AdminPanel: React.FC = () => {
                <div className="flex items-center gap-2 mr-4 animate-fade-in">
                   <button 
                     onClick={handleDiscard}
+                    disabled={publishStatus === 'loading'}
                     className="text-slate-300 hover:text-white text-xs font-bold px-3 py-2 rounded hover:bg-white/10"
                   >
                     Discard
                   </button>
                   <button 
                     onClick={handlePublish}
-                    disabled={isPublishing}
-                    className="flex items-center gap-2 px-4 py-2 bg-emerald-500 text-white rounded-lg hover:bg-emerald-600 transition-all shadow-lg shadow-emerald-500/30 text-sm font-bold animate-pulse disabled:opacity-50 disabled:cursor-not-allowed"
+                    disabled={publishStatus === 'loading'} 
+                    className={`flex items-center gap-2 px-4 py-2 text-white rounded-lg transition-all shadow-lg text-sm font-bold min-w-[160px] justify-center cursor-pointer active:scale-95
+                      ${publishStatus === 'loading' ? 'bg-slate-500 cursor-not-allowed' : 
+                        publishStatus === 'success' ? 'bg-emerald-600' :
+                        'bg-emerald-500 hover:bg-emerald-600 shadow-emerald-500/30'}
+                    `}
                   >
-                    {isPublishing ? <RefreshCw size={16} className="animate-spin"/> : <Rocket size={16} />}
-                    {isPublishing ? 'Publishing...' : 'Publish Changes'}
+                    {publishStatus === 'loading' && <><RefreshCw size={16} className="animate-spin"/> Publishing...</>}
+                    {publishStatus === 'success' && <><CheckCircle size={16} /> Success!</>}
+                    {publishStatus === 'idle' && <><Rocket size={16} /> Publish Changes</>}
+                    {publishStatus === 'error' && <><Rocket size={16} /> Retry Publish</>}
                   </button>
                </div>
              )}
@@ -318,7 +393,7 @@ export const AdminPanel: React.FC = () => {
          </div>
       </div>
 
-      <div className="max-w-6xl mx-auto p-8">
+      <div className="max-w-6xl mx-auto p-8 relative z-10">
         
         {/* Navigation Tabs */}
         <div className="flex gap-4 mb-8">
@@ -348,6 +423,20 @@ export const AdminPanel: React.FC = () => {
               </div>
            </div>
         )}
+
+        <div className="bg-white rounded-xl shadow-sm border border-slate-200 p-4 mb-6 flex items-start gap-3">
+            <div className="p-2 bg-blue-100 rounded-full text-blue-600 mt-1">
+                <Smartphone size={18} />
+            </div>
+            <div>
+                <h3 className="font-bold text-[#0a1e3f] text-sm">Preview Device Sinkronisasi</h3>
+                <p className="text-xs text-slate-500 mt-1">
+                   Perubahan yang Anda simpan di sini hanya bersifat <strong>Draft (Lokal)</strong> di browser ini. 
+                   Agar perubahan muncul di HP atau komputer lain, Anda wajib menekan tombol 
+                   <span className="text-emerald-600 font-bold"> "Publish Changes"</span> di pojok kanan atas.
+                </p>
+            </div>
+        </div>
 
         {activeTab === 'apps' ? (
           // ==================== APP MANAGEMENT TAB ====================
@@ -532,14 +621,36 @@ export const AdminPanel: React.FC = () => {
                 )}
              </div>
 
-             {/* API CONFIGURATION (REVERTED) */}
+             {/* API CONFIGURATION */}
              <div className="bg-white rounded-xl shadow-sm border border-slate-200 p-6">
                 <h3 className="font-bold text-slate-500 text-sm uppercase tracking-wide mb-4 border-b border-slate-200 pb-2 flex items-center gap-2">
                   <Key size={16} /> General Configuration
                 </h3>
                 
-                <div className="bg-slate-50 p-4 rounded-lg border border-slate-200">
+                <div className="bg-slate-50 p-4 rounded-lg border border-slate-200 space-y-6">
+                   {/* 1. BACKEND API URL */}
                    <div className="mb-2">
+                      <label className="block text-sm font-bold text-[#0a1e3f] mb-1">Backend API Endpoint (PHP)</label>
+                      <p className="text-xs text-slate-500 mb-2">URL to the `webapi.php` file on your server (Data Source).</p>
+                      <div className="flex gap-2">
+                          <input 
+                            type="text" 
+                            value={localApiUrl} 
+                            onChange={(e) => setLocalApiUrl(e.target.value)} 
+                            placeholder="https://yourdomain.com/webapi.php" 
+                            className="flex-1 p-2 border border-slate-300 rounded-lg text-sm font-mono focus:ring-2 focus:ring-blue-500 outline-none"
+                          />
+                          <button 
+                            onClick={handleSaveApiUrl}
+                            className="bg-slate-700 text-white px-4 py-2 rounded-lg text-sm font-bold hover:bg-slate-800 flex items-center gap-2"
+                          >
+                            <Link size={14} /> Update URL
+                          </button>
+                      </div>
+                   </div>
+
+                   {/* 2. GOOGLE GEMINI API KEY */}
+                   <div className="mb-2 border-t border-slate-200 pt-4">
                       <label className="block text-sm font-bold text-[#0a1e3f] mb-1">Google Gemini API Key</label>
                       <p className="text-xs text-slate-500 mb-2">Required for the AI Assistant feature. Get a key from AI Studio.</p>
                       <div className="flex gap-2">

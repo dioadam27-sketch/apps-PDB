@@ -11,6 +11,10 @@ interface DataContextType {
   draftModules: AppModule[];
   draftContent: LandingContent;
   
+  // --- CONFIGURATION ---
+  apiUrl: string;
+  updateApiUrl: (newUrl: string) => void;
+
   // --- ACTIONS ---
   updateDraftModule: (updatedModule: AppModule) => void;
   addDraftModule: (newModule: AppModule) => void;
@@ -18,7 +22,7 @@ interface DataContextType {
   updateDraftContent: (content: LandingContent) => void;
   
   // --- PUBLISHING ---
-  publishChanges: () => Promise<void>;
+  publishChanges: () => Promise<{ success: boolean; message?: string }>;
   discardChanges: () => void;
   hasUnsavedChanges: boolean;
 
@@ -31,14 +35,15 @@ interface DataContextType {
 
 const DataContext = createContext<DataContextType | undefined>(undefined);
 
-// Hardcoded API URL (Reverted to original)
+// Default Fallback URL - Integrated Production API
 const DEFAULT_API_URL = 'https://pkkii.pendidikan.unair.ac.id/website/webapi.php';
 
 // Keys for Local Storage
 const STORAGE_KEYS = {
   DRAFT_MODULES: 'pdb_draft_modules',
   DRAFT_CONTENT: 'pdb_draft_content',
-  AUTH: 'pdb_admin_auth'
+  AUTH: 'pdb_admin_auth',
+  API_URL: 'pdb_api_url' // New key for dynamic API URL
 };
 
 export const DataProvider: React.FC<{ children: ReactNode }> = ({ children }) => {
@@ -52,6 +57,17 @@ export const DataProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
       console.error(`Error loading ${key}`, e);
       return fallback;
     }
+  };
+
+  // --- CONFIGURATION STATE ---
+  const [apiUrl, setApiUrlState] = useState<string>(() => {
+      return localStorage.getItem(STORAGE_KEYS.API_URL) || DEFAULT_API_URL;
+  });
+
+  const updateApiUrl = (newUrl: string) => {
+      localStorage.setItem(STORAGE_KEYS.API_URL, newUrl);
+      setApiUrlState(newUrl);
+      window.location.reload(); // Reload to fetch data from new source
   };
 
   // Live State (Fetched from API, defaults to Constants)
@@ -70,7 +86,10 @@ export const DataProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
   useEffect(() => {
     const fetchLiveData = async () => {
         try {
-            const response = await fetch(DEFAULT_API_URL + '?t=' + Date.now());
+            // FIX: Removed custom headers (Pragma, Cache-Control) to avoid CORS Preflight (OPTIONS request).
+            // The timestamp query param (?t=) is sufficient to bust the cache.
+            const response = await fetch(`${apiUrl}?t=${Date.now()}`);
+
             if (response.ok) {
                 const contentType = response.headers.get("content-type");
                 if (contentType && contentType.indexOf("application/json") !== -1) {
@@ -90,17 +109,19 @@ export const DataProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
                     if (!localStorage.getItem(STORAGE_KEYS.DRAFT_CONTENT)) {
                         setDraftContent(data.landingContent || DEFAULT_LANDING_CONTENT);
                     }
+                    console.log("Successfully connected to API:", apiUrl);
                 }
             } else {
-                console.warn("API unavailable, using default data.");
+                console.warn("API unavailable, using default data. Status:", response.status);
             }
         } catch (error) {
+            // This usually happens if the server is down or CORS blocks the request entirely
             console.warn("Offline mode or API error:", error);
         }
     };
     
     fetchLiveData();
-  }, []);
+  }, [apiUrl]); // Re-run if API URL changes
 
   // Change Detection
   const [hasUnsavedChanges, setHasUnsavedChanges] = useState(false);
@@ -135,14 +156,14 @@ export const DataProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
   };
 
   // Publishing Logic (Commit Draft to Live DB)
-  const publishChanges = async () => {
+  const publishChanges = async (): Promise<{ success: boolean; message?: string }> => {
     const payload = {
         modules: draftModules,
         landingContent: draftContent
     };
 
     try {
-        const response = await fetch(DEFAULT_API_URL, {
+        const response = await fetch(apiUrl, {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify(payload)
@@ -154,18 +175,20 @@ export const DataProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
         try {
             result = JSON.parse(text);
         } catch (e) {
-            throw new Error(`Server returned invalid JSON: ${text.substring(0, 100)}...`);
+            console.error("Invalid JSON response:", text);
+            throw new Error(`Server returned invalid JSON. Response: ${text.substring(0, 100)}...`);
         }
 
         if (result.success) {
             setLiveModules(draftModules);
             setLiveContent(draftContent);
+            return { success: true };
         } else {
-            alert("Gagal menyimpan ke database: " + (result.error || 'Unknown error'));
+            return { success: false, message: result.error || 'Unknown server error' };
         }
-    } catch (error) {
+    } catch (error: any) {
         console.error("Publish error:", error);
-        alert(`Terjadi kesalahan koneksi ke server.`);
+        return { success: false, message: error.message || 'Terjadi kesalahan koneksi ke server.' };
     }
   };
 
@@ -195,6 +218,11 @@ export const DataProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
     setDraftContent(DEFAULT_LANDING_CONTENT);
     localStorage.setItem(STORAGE_KEYS.DRAFT_MODULES, JSON.stringify(INITIAL_MODULES));
     localStorage.setItem(STORAGE_KEYS.DRAFT_CONTENT, JSON.stringify(DEFAULT_LANDING_CONTENT));
+    
+    // Reset API URL to Default (Integrated)
+    localStorage.removeItem(STORAGE_KEYS.API_URL);
+    setApiUrlState(DEFAULT_API_URL);
+    
     window.location.reload();
   };
 
@@ -204,6 +232,8 @@ export const DataProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
       landingContent: liveContent,
       draftModules,
       draftContent,
+      apiUrl,
+      updateApiUrl,
       updateDraftModule, 
       addDraftModule, 
       deleteDraftModule, 
